@@ -1,0 +1,133 @@
+
+
+Colly是一个用于构建web scraper的golang框架
+
+从简单的scraper到处理百万个web页面的复杂额异步网站爬虫。
+colly提供用于执行网络请求和处理所接收内容的api(例如，
+与HTML文档的DOM树交互)
+colly是一个高度可定制的爬虫框架。具有合理的默认值，并提供了很多选项来更改这些默认值
+
+Collector配置
+
+使用缺省值创建一个Collector
+
+c1 := colly.NewCollector()
+
+创建Collector并修改User-Agent和url revisit选项
+
+c2 := colly.NewCollector(
+colly.UserAgent("xy"),
+colly.AllowURLRevisit(),
+)
+
+
+或分开设置
+
+c2 := colly.NewCollector()
+c2.UserAgent = "xy"
+c2.AllowURLRevisit = true
+
+其实可以在爬虫job的任意时刻，通过修改Collector的属性来修改配置，一个比较好的
+实践就是创建一个User-Agent switcher,这样可以在每次请求之前，更换新的User-Agent
+const letterBytes = "asdfafadfawe"
+
+func RandomString() string{
+	b := make([]byte,rand.Intn(10)+10)
+	for i:= range b{
+		b[i] = letterBytes[rand.Intn(len(letterBytes))]	
+}
+
+	return string(b)
+}
+
+c := colly.NewCollector()
+
+c.OnRequest(func(r*colly.Request)){
+	r.Header.Set("User-Agent",RandomString())
+})
+
+
+通过环境变量来配置Collector
+
+colly支持通过环境变量更改Collector的默认配置。这允许我们在
+不重新编译的情况下调整Collector.
+环境解析是Collector初始化的最后一步，因此初始化
+后的每一个配置更改都会覆盖从环境解析的配置
+
+
+可配置的环境变量
+
+
+HTTP配置
+colly使用golang的默认http客户端作为网络层。可以通过更改默认的http roundtripper来调整http选项
+
+收集器
+
+colly的主要实例是收集器对象，当Colly收集器任务运行时，收集器负责网络通讯和执行附加的回调
+任务。你必须初始化收集器
+import "github.com/gocolly/colly"
+c := colly.NewCollector()
+
+回调
+
+可以把不同类型的回调函数附加到收集器上来控制收集任务，然后取回信息，
+
+
+添加回调到收集器中
+
+c.OnRequest(func(r *colly.Request){
+	fmt.Println("Visiting",r.URL)
+})
+
+
+c.OnError(func(_ *colly.Requese,err error){
+	log.Println("Something went wrong:",err)
+})
+
+
+c.OnResponse(func(r *colly.Requese){
+	fmt.Println("Visited",r.Request.URL)})
+
+
+
+
+回调函数执行顺序
+
+１．OnRequest
+
+在请求之前调用
+
+２．　OnError
+在请求中出现错误时调用
+3. OnResponse
+
+响应接收到之后调用
+
+４．　OnHTML
+
+OnResponse正确执行后，如果接收到的文本是HTML时执行
+
+5. OnXML
+
+OnResponse正确执行后，如果接收到的文本是xml时执行
+
+６．　OnScraped
+
+OnXML回调后调用
+
+
+配置
+
+colly是一个高度自定义的爬虫框架，它提供合理的默认配置，而且提供了大量的
+配置取改变它
+
+收集器配置
+
+全面的收集器属性列表，推荐使用colly.NewCollector(options...)
+这种方法来初始化收集器
+
+使用默认配置创建一个收集器
+
+
+最佳实践（Best Practices）
+
